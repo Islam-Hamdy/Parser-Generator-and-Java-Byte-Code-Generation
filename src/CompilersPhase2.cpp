@@ -1,15 +1,16 @@
-//============================================================================
-// Name        : CompilersPhase2.cpp
-// Author      : Islam
-// Version     :
-// Copyright   : Your copyright notice
-// Description : Hello World in C++, Ansi-style
-//============================================================================
-
 #include <iostream>
+#include <map>
+#include <cstdio>
+#include <string>
+
+#include "Parser.h"
 using namespace std;
 
 int main() {
-	cout << "Hello UPC World" << endl; // prints Hello UPC World
+	Parser* p = new Parser("CFG.in");
+	map<string, pair<int, bool> > m = p->m;
+	vector<vector<vector<int> > > g = p->g;
+	p->print();
+	fflush(NULL);
 	return 0;
 }
