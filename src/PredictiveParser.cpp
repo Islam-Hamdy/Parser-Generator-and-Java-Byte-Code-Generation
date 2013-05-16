@@ -18,7 +18,7 @@ using namespace std;
 
 PredictiveParser::PredictiveParser(Parser* par) {
 	parser = par;
-	visited = new bool[sz(parser->g) ];
+	visited = new bool[sz(parser->g)];
 	initializeNullables();
 	generateFirstSets();
 }
@@ -40,10 +40,10 @@ bool PredictiveParser::isNullable(int symbolId) {
 
 	vector<vector<int> > RHS = parser->g[symbolId];
 	bool answer = false;
-	for (int i = 0; !answer && i < sz(RHS) ; i++) {
+	for (int i = 0; !answer && i < sz(RHS); i++) {
 		vector<int> cur = RHS[i];
 		bool status = true;
-		for (int j = 0; status && j < sz(cur) ; j++)
+		for (int j = 0; status && j < sz(cur); j++)
 			status &= isNullable(cur[j]);
 		answer |= status;
 	}
@@ -61,10 +61,11 @@ void PredictiveParser::generateFirstSets() {
 vector<int> * PredictiveParser::first_set(int cur) {
 	vector<int> *res = new vector<int>;
 	vector<int> tmp;
-	for (int i = 0; i < sz(parser->g[cur]) ; i++) {
+	for (int i = 0; i < sz(parser->g[cur]); i++) {
 		tmp = *go(parser->g[cur][i]);
-		for (int j = 0; j < sz(tmp) ; j++) {
-			res->push_back(tmp[j]);
+		for (int j = 0; j < sz(tmp); j++) {
+			if (find(res->begin(), res->end(), tmp[j]) == res->end())
+				res->push_back(tmp[j]);
 		}
 	}
 	return res;
@@ -74,7 +75,7 @@ vector<int> * PredictiveParser::go(vector<int> cur) {
 	vector<int> *res = new vector<int>;
 	vector<int> tmp;
 	int nullpointer = parser->m["\\L"].first;
-	for (int i = 0; i < sz(cur) ; i++) {
+	for (int i = 0; i < sz(cur); i++) {
 		if (parser->rev_m[cur[i]].second) {
 			// terminal
 //			puts(parser->rev_m[cur[i]].first.c_str());
@@ -82,9 +83,9 @@ vector<int> * PredictiveParser::go(vector<int> cur) {
 			break;
 		} else {
 			tmp = *first_set(cur[i]);
-			for (int j = 0; j < sz(tmp) ; j++) {
-				if(tmp[j]!=nullpointer)
-				res->push_back(tmp[j]);
+			for (int j = 0; j < sz(tmp); j++) {
+				if (tmp[j] != nullpointer)
+					res->push_back(tmp[j]);
 			}
 			if (!nullables[cur[i]])
 				break;
@@ -116,7 +117,7 @@ void PredictiveParser::printFirstSets() {
 	map<int, vector<int> >::iterator miter = firstSets.begin();
 	while (miter != firstSets.end()) {
 		cout << "FirstSet(" << parser->rev_m[(*miter).first].first << " ) : { ";
-		for (int i = 0; i < sz((*miter).second) ; i++) {
+		for (int i = 0; i < sz((*miter).second); i++) {
 			cout << parser->rev_m[((*miter).second)[i]].first << ", ";
 		}
 		cout << " }" << endl;
