@@ -26,10 +26,11 @@ public:
 	bool isNullable(int symbolId);
 	void initializeNullables();
 	void constructTable();
-
-private:
+	void generateFirstSets();
 	vector<int> * go(vector<int> cur);
 	vector<int> * first_set(int cur);
+	void printNullables();
+	void printFirstSets();
 
 };
 

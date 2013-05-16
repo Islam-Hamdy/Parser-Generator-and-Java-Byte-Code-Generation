@@ -4,6 +4,7 @@
 #include <string>
 
 #include "Parser.h"
+#include "PredictiveParser.h"
 using namespace std;
 
 int main() {
@@ -11,6 +12,8 @@ int main() {
 	map<string, pair<int, bool> > m = p->m;
 	vector<vector<vector<int> > > g = p->g;
 	p->print();
+	PredictiveParser*pred_parser = new PredictiveParser(p);
+	pred_parser->printNullables();
 	fflush(NULL);
 	return 0;
 }
