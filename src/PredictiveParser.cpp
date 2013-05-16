@@ -20,7 +20,7 @@ PredictiveParser::PredictiveParser(Parser* par) {
 	parser = par;
 	visited = new bool[sz(parser->g) ];
 	initializeNullables();
-	generateFirstSets();
+//	generateFirstSets();
 }
 
 void PredictiveParser::initializeNullables() {
@@ -35,7 +35,7 @@ bool PredictiveParser::isNullable(int symbolId) {
 	if (!(parser->rev_m[symbolId].first.compare("\\L"))) // epsilon match
 		return true;
 
-	if ((parser->rev_m[symbolId].second))
+	if ((parser->rev_m[symbolId].second)) // terminal and not epsilon
 		return false;
 
 	vector<vector<int> > RHS = parser->g[symbolId];
@@ -44,10 +44,7 @@ bool PredictiveParser::isNullable(int symbolId) {
 		vector<int> cur = RHS[i];
 		bool status = true;
 		for (int j = 0; status && j < sz(cur) ; j++)
-			if (!visited[cur[j]]) {
-				visited[cur[j]] = true;
-				status &= isNullable(cur[j]);
-			}
+			status &= isNullable(cur[j]);
 		answer |= status;
 	}
 	return answer;

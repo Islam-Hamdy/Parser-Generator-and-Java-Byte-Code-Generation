@@ -14,7 +14,7 @@ int main() {
 	p->print();
 	PredictiveParser*pred_parser = new PredictiveParser(p);
 	pred_parser->printNullables();
-	pred_parser->printFirstSets();
+//	pred_parser->printFirstSets();
 //	fflush(NULL);
 	return 0;
 }
