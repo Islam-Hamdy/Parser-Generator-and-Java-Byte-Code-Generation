@@ -61,11 +61,15 @@ void PredictiveParser::generateFirstSets() {
 vector<int> * PredictiveParser::first_set(int cur) {
 	vector<int> *res = new vector<int>;
 	vector<int> tmp;
-	for (int i = 0; i < sz(parser->g[cur]); i++) {
-		tmp = *go(parser->g[cur][i]);
-		for (int j = 0; j < sz(tmp); j++) {
-			if (find(res->begin(), res->end(), tmp[j]) == res->end())
-				res->push_back(tmp[j]);
+	if (parser->rev_m[cur].second) {
+		res->push_back(cur);
+	} else {
+		for (int i = 0; i < sz(parser->g[cur]); i++) {
+			tmp = *go(parser->g[cur][i]);
+			for (int j = 0; j < sz(tmp); j++) {
+				if (find(res->begin(), res->end(), tmp[j]) == res->end())
+					res->push_back(tmp[j]);
+			}
 		}
 	}
 	return res;
