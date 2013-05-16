@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <cstring>
 #include <queue>
+#include <set>
 
 #define sz(a) (int)(a.size())
 
@@ -19,34 +20,43 @@ using namespace std;
 
 PredictiveParser::PredictiveParser(Parser* par) {
 	parser = par;
-	visited = new bool[sz(parser->g)];
+	isLLOne = true;
 	initializeNullables();
-	generateFirstSets();
-	generateFollowSets();
+	if (isLLOne) {
+		generateFirstSets();
+		generateFollowSets();
+	}
 }
 
 void PredictiveParser::initializeNullables() {
 	map<int, pair<string, bool> >::iterator miter = parser->rev_m.begin();
-	while (miter != parser->rev_m.end()) {
-		nullables[(*miter).first] = isNullable((*miter).first);
+	while (miter != parser->rev_m.end() && isLLOne) {
+		tempGlobalNull = false;
+		nullables[(*miter).first] = isNullable((*miter).first, (*miter).first);
 		miter++;
 	}
 }
 
-bool PredictiveParser::isNullable(int symbolId) {
+bool PredictiveParser::isNullable(int symbolId, int startSymbol) {
 	if (!(parser->rev_m[symbolId].first.compare("\\L"))) // epsilon match
 		return true;
 
 	if ((parser->rev_m[symbolId].second)) // terminal and not epsilon
 		return false;
 
+	if (tempGlobalNull && symbolId == startSymbol) {
+		isLLOne = false;
+		return false;
+	}
+
+	tempGlobalNull = true;
 	vector<vector<int> > RHS = parser->g[symbolId];
 	bool answer = false;
-	for (int i = 0; !answer && i < sz(RHS); i++) {
+	for (int i = 0; isLLOne && !answer && i < sz(RHS) ; i++) {
 		vector<int> cur = RHS[i];
 		bool status = true;
-		for (int j = 0; status && j < sz(cur); j++)
-			status &= isNullable(cur[j]);
+		for (int j = 0; isLLOne && status && j < sz(cur) ; j++)
+			status &= isNullable(cur[j], startSymbol);
 		answer |= status;
 	}
 	return answer;
@@ -71,13 +81,13 @@ void PredictiveParser::generateFollowSets() {
 		if (!((*miter).second.second)) {
 			int cur = (*miter).first;
 
-			for (int i = 0; i < sz(parser->g[cur]); i++) {
+			for (int i = 0; i < sz(parser->g[cur]) ; i++) {
 				t1 = &parser->g[cur][i];
-				for (int j = 0; j < sz(parser->g[cur][i]); j++) {
+				for (int j = 0; j < sz(parser->g[cur][i]) ; j++) {
 					follow = &followSets[(*t1)[j]];
-					if(parser->rev_m[(*t1)[j]].second)
+					if (parser->rev_m[(*t1)[j]].second)
 						continue;
-					for (int k = j + 1; k < sz(parser->g[cur][i]); k++) {
+					for (int k = j + 1; k < sz(parser->g[cur][i]) ; k++) {
 
 						if (parser->rev_m[(*t1)[k]].second) {
 							// terminal
@@ -86,7 +96,9 @@ void PredictiveParser::generateFollowSets() {
 						} else {
 							tmp = &firstSets[(*t1)[k]];
 							for (int j = 0; j < tmp->size(); j++) {
-								if ((*tmp)[j] != nullpointer && find(follow->begin(),follow->end(),(*tmp)[j])==follow->end())
+								if ((*tmp)[j] != nullpointer
+										&& find(follow->begin(), follow->end(),
+												(*tmp)[j]) == follow->end())
 									follow->push_back((*tmp)[j]);
 							}
 							if (!nullables[(*t1)[k]])
@@ -105,10 +117,10 @@ void PredictiveParser::generateFollowSets() {
 void PredictiveParser::topo() {
 	vector<int> * t1;
 	int nullpointer = parser->m["\\L"].first;
-	for (int i = 0; i < parser->g.size(); i++)
-		indeg[i]=0;
-	for (int i = 0; i < parser->g.size(); i++) {
-		for (int j = 0; j < parser->g[i].size(); j++) {
+	for (int i = 0; i < sz(parser->g) ; i++)
+		indeg[i] = 0;
+	for (int i = 0; i < sz(parser->g) ; i++) {
+		for (int j = 0; j < sz(parser->g[i]) ; j++) {
 			t1 = &parser->g[i][j];
 			for (int k = parser->g[i][j].size() - 1; k >= 0; k--) {
 				tgraph[i].push_back(parser->g[i][j][k]);
@@ -122,7 +134,7 @@ void PredictiveParser::topo() {
 	map<int, int>::iterator miter = indeg.begin();
 	queue<int> q;
 	while (miter != indeg.end()) {
-		if ((*miter).second == 0&&!parser->rev_m[(*miter).first].second) {
+		if ((*miter).second == 0 && !parser->rev_m[(*miter).first].second) {
 			q.push((*miter).first);
 		}
 		miter++;
@@ -131,16 +143,15 @@ void PredictiveParser::topo() {
 		int cur = q.front();
 		q.pop();
 
-
-		for (int i = 0; i < tgraph[cur].size(); i++) {
+		for (int i = 0; i < sz(tgraph[cur]) ; i++) {
 			int nxt = tgraph[cur][i];
-			if(parser->rev_m[nxt].second)
-							continue;
+			if (parser->rev_m[nxt].second)
+				continue;
 			indeg[nxt]--;
-			if (indeg[nxt] == 0 &&!parser->rev_m[nxt].second )
+			if (indeg[nxt] == 0 && !parser->rev_m[nxt].second)
 				q.push(nxt);
 
-			for (int j = 0; j < followSets[cur].size(); j++) {
+			for (int j = 0; j < sz(followSets[cur]) ; j++) {
 				if (followSets[nxt].end()
 						== find(followSets[nxt].begin(), followSets[nxt].end(),
 								followSets[cur][j]))
@@ -156,9 +167,9 @@ vector<int> * PredictiveParser::first_set(int cur) {
 	if (parser->rev_m[cur].second) {
 		res->push_back(cur);
 	} else {
-		for (int i = 0; i < sz(parser->g[cur]); i++) {
+		for (int i = 0; i < sz(parser->g[cur]) ; i++) {
 			tmp = *go(parser->g[cur][i]);
-			for (int j = 0; j < sz(tmp); j++) {
+			for (int j = 0; j < sz(tmp) ; j++) {
 				if (find(res->begin(), res->end(), tmp[j]) == res->end())
 					res->push_back(tmp[j]);
 			}
@@ -171,7 +182,7 @@ vector<int> * PredictiveParser::go(vector<int> cur) {
 	vector<int> *res = new vector<int>;
 	vector<int> tmp;
 	int nullpointer = parser->m["\\L"].first;
-	for (int i = 0; i < sz(cur); i++) {
+	for (int i = 0; i < sz(cur) ; i++) {
 		if (parser->rev_m[cur[i]].second) {
 			// terminal
 //			puts(parser->rev_m[cur[i]].first.c_str());
@@ -179,7 +190,7 @@ vector<int> * PredictiveParser::go(vector<int> cur) {
 			break;
 		} else {
 			tmp = *first_set(cur[i]);
-			for (int j = 0; j < sz(tmp); j++) {
+			for (int j = 0; j < sz(tmp) ; j++) {
 				if (tmp[j] != nullpointer)
 					res->push_back(tmp[j]);
 			}
@@ -204,41 +215,56 @@ bool PredictiveParser::constructTable() {
 		predictive_table[i] = new int[terminal_counter];
 		memset(predictive_table[i], DUMMY, sizeof(int) * terminal_counter);
 	}
+	set<int> first_gamma;
+	vector<int> temp;
 
 	//for each X -> gamma
-	for (int i = 0; i < sz(parser->g); i++) {
+	for (int i = 0; i < sz(parser->g) ; i++) {
 		// get First (gamma)
 
-		vector<int> first_gamma;
-		int first_not_nullable = 0;
-		bool not_nullable_exists = false;
-		for (int j = 0; j < sz(parser->g[i]); j++) {
-			for (int k = 0; k < sz(parser->g[i][j]); k++) {
-				if (!nullables[(parser->g[i])[j][k]]) {
-					first_not_nullable = j;
-					not_nullable_exists = true;
+		temp.clear();
+		first_gamma.clear();
+		bool isGammaNullable = false;
+		for (int j = 0; j < sz(parser->g[i]) ; j++) {
+			int k = 0;
+			for (k = 0; k < sz(parser->g[i][j]) ; k++) {
+				temp = firstSets[(parser->g[i][j])[k]];
+				for (int kk = 0; kk < sz(temp) ; kk++)
+					first_gamma.insert(temp[kk]);
+
+				if (!nullables[(parser->g[i])[j][k]])
 					break;
-				}
 			}
-			vector<int> temp = firstSets[(parser->g[i][j])[first_not_nullable]];
-			for (int kk = 0; kk < sz(temp); kk++)
-				first_gamma.push_back(temp[kk]);
+			if (k == sz(parser->g[i][j])) { // all tokens are nullables
+				isGammaNullable = true;
+			}
 		}
 		//	 for each t in FIRST(gamma)
 		// table[X,t] = X->gamma
-		for (int j = 0; j < sz(first_gamma); j++) {
-			if (predictive_table[i][first_gamma[j]] != DUMMY) {
+		set<int>::iterator iter = first_gamma.begin();
+		while (iter != first_gamma.end()) {
+			int current = (*iter);
+			if (predictive_table[i][current] != DUMMY) {
 				return false; // not LL(1) grammar
 			} else {
-				predictive_table[i][first_gamma[j]] = i;
+				predictive_table[i][current] = i;
 			}
+			iter++;
 		}
 
 		//if gamma is nullable
 //		 for each t in FOLLOW(X)
 		//	 table[X,t] = X->gamma
-		if (!not_nullable_exists) {
-			// TODO merging followsets
+		if (isGammaNullable) {
+			vector<int> x_follow = followSets[i];
+			for (int j = 0; j < sz(x_follow) ; j++) {
+				int current = x_follow[j];
+				if (predictive_table[i][current] != DUMMY) {
+					return false; // not LL(1) grammar
+				} else {
+					predictive_table[i][current] = i;
+				}
+			}
 		}
 	}
 	return true;
@@ -278,7 +304,7 @@ void PredictiveParser::printFirstSets() {
 	map<int, vector<int> >::iterator miter = firstSets.begin();
 	while (miter != firstSets.end()) {
 		cout << "FirstSet(" << parser->rev_m[(*miter).first].first << " ) : { ";
-		for (int i = 0; i < sz((*miter).second); i++) {
+		for (int i = 0; i < sz((*miter).second) ; i++) {
 			cout << parser->rev_m[((*miter).second)[i]].first << ", ";
 		}
 		cout << " }" << endl;
@@ -292,7 +318,7 @@ void PredictiveParser::printFollowSets() {
 	while (miter != followSets.end()) {
 		cout << "FollowSet(" << parser->rev_m[(*miter).first].first
 				<< " ) : { ";
-		for (int i = 0; i < sz((*miter).second); i++) {
+		for (int i = 0; i < sz((*miter).second) ; i++) {
 			cout << parser->rev_m[((*miter).second)[i]].first << ", ";
 		}
 		cout << " }" << endl;
