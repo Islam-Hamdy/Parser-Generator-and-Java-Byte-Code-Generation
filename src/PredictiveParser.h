@@ -19,6 +19,7 @@ public:
 	Parser * parser;
 	map<int, bool> nullables; // if symbol with id x is nullable or not
 	map<int, vector<int> > firstSets; //first set vectors
+	map<int, vector<int> > followSets; //first set vectors
 	bool* visited;
 	vector<vector<int> > predictive_table;
 
@@ -29,6 +30,10 @@ public:
 	void generateFirstSets();
 	vector<int> * go(vector<int> cur);
 	vector<int> * first_set(int cur);
+
+	vector<int> * goFollows(vector<int> cur);
+	vector<int> * follow_set(int cur);
+
 	void printNullables();
 	void printFirstSets();
 
