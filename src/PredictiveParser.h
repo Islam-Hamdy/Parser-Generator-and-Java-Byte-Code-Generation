@@ -26,6 +26,10 @@ public:
 	void initializeNullables();
 	void constructTable();
 
+private:
+	vector<int> * go(vector<int > cur);
+	vector<int> * first_set(int cur);
+
 };
 
 #endif /* PREDICTIVEPARSER_H_ */

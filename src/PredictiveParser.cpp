@@ -46,3 +46,41 @@ bool PredictiveParser::isNullable(int symbolId) {
 	}
 	return answer;
 }
+
+vector<int> * PredictiveParser::first_set(int cur) {
+	vector<int> res;
+	vector<int> tmp;
+	for (int i = 0; i < (parser->g[cur]).size(); i++) {
+		tmp = *go(parser->g[cur][i]);
+		for (int j = 0; j < tmp.size(); j++) {
+			res.push_back(tmp[i]);
+		}
+	}
+	return &res;
+}
+
+vector<int> * PredictiveParser::go(vector<int> cur) {
+	vector<int> res;
+	vector<int> tmp;
+	for (int i = 0; i < cur.size(); i++) {
+		if (parser->rev_m[cur[i]].second) {
+			// terminal
+			res.push_back(cur[i]);
+			break;
+		} else {
+			tmp = *first_set(cur[i]);
+			for (int j = 0; j < tmp.size(); j++) {
+				// MAKE SURE THAT YOU DON"T ADD THE DON"T CARE HERE!
+				res.push_back(tmp[i]);
+			}
+			if (!nullables[cur[i]])
+				break;
+		}
+		if(i==cur.size()-1){
+			// we're at the end and all of them are nullable
+
+			// XXX add null char to the answer !
+		}
+	}
+	return &res;
+}
