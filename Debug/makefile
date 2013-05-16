@@ -38,19 +38,19 @@ endif
 # Add inputs and outputs from these tool invocations to the build variables 
 
 # All Target
-all: CompilersPhase2
+all: Parser-Generator-and-Java-Byte-Code-Generation
 
 # Tool invocations
-CompilersPhase2: $(OBJS) $(USER_OBJS)
+Parser-Generator-and-Java-Byte-Code-Generation: $(OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: GCC C++ Linker'
-	g++  -o "CompilersPhase2" $(OBJS) $(USER_OBJS) $(LIBS)
+	g++  -o "Parser-Generator-and-Java-Byte-Code-Generation" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 
 # Other Targets
 clean:
-	-$(RM) $(OBJS)$(C++_DEPS)$(C_DEPS)$(CC_DEPS)$(CPP_DEPS)$(EXECUTABLES)$(CXX_DEPS)$(C_UPPER_DEPS) CompilersPhase2
+	-$(RM) $(OBJS)$(C++_DEPS)$(C_DEPS)$(CC_DEPS)$(CPP_DEPS)$(EXECUTABLES)$(CXX_DEPS)$(C_UPPER_DEPS) Parser-Generator-and-Java-Byte-Code-Generation
 	-@echo ' '
 
 .PHONY: all clean dependents

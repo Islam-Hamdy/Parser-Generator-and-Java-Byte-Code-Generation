@@ -20,7 +20,7 @@ PredictiveParser::PredictiveParser(Parser* par) {
 	parser = par;
 	visited = new bool[sz(parser->g) ];
 	initializeNullables();
-	//generateFirstSets();
+	generateFirstSets();
 }
 
 void PredictiveParser::initializeNullables() {
@@ -62,30 +62,31 @@ void PredictiveParser::generateFirstSets() {
 }
 
 vector<int> * PredictiveParser::first_set(int cur) {
-	vector<int> res;
+	vector<int> *res = new vector<int>;
 	vector<int> tmp;
 	for (int i = 0; i < sz(parser->g[cur]) ; i++) {
 		tmp = *go(parser->g[cur][i]);
 		for (int j = 0; j < sz(tmp) ; j++) {
-			res.push_back(tmp[i]);
+			res->push_back(tmp[i]);
 		}
 	}
-	return &res;
+	return res;
 }
 
 vector<int> * PredictiveParser::go(vector<int> cur) {
-	vector<int> res;
+	vector<int> *res = new vector<int>;
 	vector<int> tmp;
 	for (int i = 0; i < sz(cur) ; i++) {
 		if (parser->rev_m[cur[i]].second) {
 			// terminal
-			res.push_back(cur[i]);
+			puts(parser->rev_m[cur[i]].first.c_str());
+			res->push_back(cur[i]);
 			break;
 		} else {
 			tmp = *first_set(cur[i]);
 			for (int j = 0; j < sz(tmp) ; j++) {
 				// MAKE SURE THAT YOU DON"T ADD THE DON"T CARE HERE!
-				res.push_back(tmp[i]);
+				res->push_back(tmp[i]);
 			}
 			if (!nullables[cur[i]])
 				break;
@@ -96,7 +97,7 @@ vector<int> * PredictiveParser::go(vector<int> cur) {
 			// XXX add null char to the answer !
 		}
 	}
-	return &res;
+	return res;
 }
 
 void PredictiveParser::printNullables() {
