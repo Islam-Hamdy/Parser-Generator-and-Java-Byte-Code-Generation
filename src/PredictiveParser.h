@@ -8,6 +8,7 @@
 #include <map>
 #include <string>
 #include <iostream>
+#include "Parser.h"
 #ifndef PREDICTIVEPARSER_H_
 #define PREDICTIVEPARSER_H_
 
@@ -27,7 +28,7 @@ public:
 	void constructTable();
 
 private:
-	vector<int> * go(vector<int > cur);
+	vector<int> * go(vector<int> cur);
 	vector<int> * first_set(int cur);
 
 };

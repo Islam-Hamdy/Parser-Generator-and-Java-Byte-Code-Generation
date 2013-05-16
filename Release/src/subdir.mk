@@ -5,15 +5,18 @@
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
 ../src/CompilersPhase2.cpp \
-../src/Parser.cpp 
+../src/Parser.cpp \
+../src/PredictiveParser.cpp 
 
 OBJS += \
 ./src/CompilersPhase2.o \
-./src/Parser.o 
+./src/Parser.o \
+./src/PredictiveParser.o 
 
 CPP_DEPS += \
 ./src/CompilersPhase2.d \
-./src/Parser.d 
+./src/Parser.d \
+./src/PredictiveParser.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes
