@@ -46,7 +46,6 @@ bool PredictiveParser::isNullable(int symbolId, int startSymbol) {
 
 	if (tempGlobalNull && symbolId == startSymbol) {
 		isLLOne = false;
-		return false;
 	}
 
 	tempGlobalNull = true;
@@ -205,85 +204,71 @@ vector<int> * PredictiveParser::go(vector<int> cur) {
 	}
 	return res;
 }
+/*
+ * for each X -> gamma
+ *  	if gamma is nullable
+ * 			for each t in FOLLOW(X)
+ * 				table[X,t] = X->gamma
+ * 		for each t in FIRST(gamma)
+ *			table[X,t] = X->gamma
+ */
 
 bool PredictiveParser::constructTable() {
-//	predictive_table
-	terminal_counter = countSymbols(true);
-	non_terminal_counter = countSymbols(false);
-	predictive_table = new int*[non_terminal_counter];
-	for (int i = 0; i < non_terminal_counter; ++i) {
-		predictive_table[i] = new int[terminal_counter];
-		memset(predictive_table[i], DUMMY, sizeof(int) * terminal_counter);
+
+	// Initializing table
+	predictive_table = new int*[sz(parser->g) ];
+	for (int i = 0; i < sz(parser->g) ; ++i) {
+		predictive_table[i] = new int[sz(parser->g) ];
+		memset(predictive_table[i], DUMMY, sizeof(int) * (sz(parser->g) ));
 	}
-	set<int> first_gamma;
+
+	set<pair<int, int> > first_gamma;
 	vector<int> temp;
 
-	//for each X -> gamma
 	for (int i = 0; i < sz(parser->g) ; i++) {
-		// get First (gamma)
+		if (!sz(parser->g[i])) //terminal detected
+			continue;
 
 		temp.clear();
 		first_gamma.clear();
-		bool isGammaNullable = false;
 		for (int j = 0; j < sz(parser->g[i]) ; j++) {
 			int k = 0;
 			for (k = 0; k < sz(parser->g[i][j]) ; k++) {
 				temp = firstSets[(parser->g[i][j])[k]];
 				for (int kk = 0; kk < sz(temp) ; kk++)
-					first_gamma.insert(temp[kk]);
+					first_gamma.insert(make_pair(temp[kk], j));
 
 				if (!nullables[(parser->g[i])[j][k]])
 					break;
 			}
 			if (k == sz(parser->g[i][j])) { // all tokens are nullables
-				isGammaNullable = true;
-			}
-		}
-		//	 for each t in FIRST(gamma)
-		// table[X,t] = X->gamma
-		set<int>::iterator iter = first_gamma.begin();
-		while (iter != first_gamma.end()) {
-			int current = (*iter);
-			if (predictive_table[i][current] != DUMMY) {
-				return false; // not LL(1) grammar
-			} else {
-				predictive_table[i][current] = i;
-			}
-			iter++;
-		}
-
-		//if gamma is nullable
-//		 for each t in FOLLOW(X)
-		//	 table[X,t] = X->gamma
-		if (isGammaNullable) {
-			vector<int> x_follow = followSets[i];
-			for (int j = 0; j < sz(x_follow) ; j++) {
-				int current = x_follow[j];
-				if (predictive_table[i][current] != DUMMY) {
-					return false; // not LL(1) grammar
-				} else {
-					predictive_table[i][current] = i;
+				vector<int> x_follow = followSets[i];
+				for (int j2 = 0; j2 < sz(x_follow) ; j2++) {
+					int current = x_follow[j2];
+					if (predictive_table[i][current] != DUMMY) {
+						return false; // not LL(1) grammar
+					} else {
+						predictive_table[i][current] = j2;
+					}
 				}
 			}
 		}
+		cout << "Starting symbol = " << parser->rev_m[i].first << endl;
+
+		set<pair<int, int> >::iterator iter = first_gamma.begin();
+		while (iter != first_gamma.end()) {
+			pair<int, int> current = (*iter);
+			cout << "Current value =  " << parser->rev_m[current.first].first;
+			if (predictive_table[i][current.first] != DUMMY) {
+				return false; // not LL(1) grammar
+			} else {
+				cout << " value= " << current.second << endl;
+				predictive_table[i][current.first] = current.second;
+			}
+			iter++;
+		}
 	}
 	return true;
-}
-
-int PredictiveParser::countSymbols(bool isTerminal) {
-	int counter = 0;
-	map<int, pair<string, bool> >::iterator miter = parser->rev_m.begin();
-	while (miter != parser->rev_m.end()) {
-		if ((*miter).second.second == isTerminal) {
-			if (isTerminal)
-				terminals_list.push_back((*miter).first);
-			else
-				non_terminals_list.push_back((*miter).first);
-			counter++;
-		}
-		miter++;
-	}
-	return counter;
 }
 
 void PredictiveParser::printNullables() {
@@ -325,17 +310,35 @@ void PredictiveParser::printFollowSets() {
 		miter++;
 	}
 }
-void PredictiveParser::printPredictiveTable() {
+
+int PredictiveParser::countSymbols(bool isTerminal) {
+	int counter = 0;
 	map<int, pair<string, bool> >::iterator miter = parser->rev_m.begin();
 	while (miter != parser->rev_m.end()) {
-		int cur = (*miter).first;
+		if ((*miter).second.second == isTerminal) {
+			if (isTerminal)
+				terminals_list.push_back((*miter).first);
+			else
+				non_terminals_list.push_back((*miter).first);
+			counter++;
+		}
+		miter++;
+	}
+	return counter;
+}
+
+void PredictiveParser::printPredictiveTable() {
+
+	int terminal_counter = countSymbols(true);
+	int non_terminal_counter = countSymbols(false);
+
+	for (int i = 0; i < non_terminal_counter; i++) {
+		int cur = non_terminals_list[i];
 		cout << parser->rev_m[cur].first << " --> { ";
 		for (int j = 0; j < terminal_counter; j++) {
-			cout << "(" << parser->rev_m[terminals_list[j]].first
-					<< ", Production # "
-					<< predictive_table[cur][terminals_list[j]] << "),  ";
+			cout << "{" << parser->rev_m[terminals_list[j]].first << ","
+					<< predictive_table[cur][terminals_list[j]] << "} ,  ";
 		}
 		cout << " }" << endl;
-		miter++;
 	}
 }

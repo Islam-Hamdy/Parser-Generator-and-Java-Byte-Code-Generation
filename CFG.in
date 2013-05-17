@@ -1,5 +1,8 @@
-# S = A B C
-# A = 'a' | C 'b' | '\L' 
-# B = C | 'd' A | '\L'
-# C = 'e' | 'f'
-
+# E = T Z '\L'
+# Z = '+' T Z
+| '-' T Z
+# T = F X
+# X = '*' F X
+| '/' F X
+# F = 'num'
+| 'id'

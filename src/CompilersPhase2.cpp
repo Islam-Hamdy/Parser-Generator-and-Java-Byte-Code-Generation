@@ -15,11 +15,12 @@ int main() {
 	p->m["$"] = make_pair(total, true);
 	p->rev_m[total] = make_pair("$", true);
 	p->print();
+
 	PredictiveParser*pred_parser = new PredictiveParser(p);
 	bool isLLOne = pred_parser->constructTable();
 
 	cout << "LL(1) : " << pred_parser->isLLOne << endl;
-	if (pred_parser->isLLOne) {
+	if (isLLOne && pred_parser->isLLOne) {
 		pred_parser->printNullables();
 		pred_parser->printFirstSets();
 		pred_parser->printFollowSets();

@@ -32,7 +32,6 @@ public:
 	bool tempGlobalNull;
 	int** predictive_table;
 	static const int DUMMY = -1;
-	int terminal_counter, non_terminal_counter;
 
 	static const char EndOfFile = '$';
 
